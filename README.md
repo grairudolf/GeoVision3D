@@ -1,68 +1,36 @@
-# GeoVision3D: High-Accuracy 3D Shape Analysis, Classification, and Retrieval
+# GeoVision3D - 3D Shape Analysis & Retrieval System
 
-A comprehensive Python system for analyzing, classifying, and retrieving 3D shapes from mesh files and camera feeds using advanced computer vision, geometric processing, and machine learning techniques.
+A comprehensive Python system for analyzing, classifying, and retrieving 3D shapes from mesh files using computer vision and machine learning techniques.
 
-## Features
+---
 
-### 1. **Multi-Source Input Processing**
-   - Load and process 3D mesh files (OBJ, STL formats)
-   - Reconstruct 3D geometry from calibrated camera feeds
-   - Support for multi-view geometry and depth estimation
+## What is GeoVision3D?
 
-### 2. **Robust Feature Extraction**
-   - **Geometric Features**: Surface curvature, normal estimation, shape moments
-   - **Mesh Statistics**: Volume, surface area, compactness, aspect ratio
-   - **Learned Descriptors**: Deep-learned shape embeddings and neural descriptors
+GeoVision3D is a complete 3D shape analysis toolkit that enables you to:
+- Load and analyze 3D mesh files (OBJ, STL, PLY, GLTF formats)
+- Extract geometric features like surface curvature, shape moments, and descriptors
+- Calibrate cameras and reconstruct 3D geometry from camera feeds
+- Classify and retrieve shapes using machine learning
+- Match shapes efficiently using multiple similarity metrics
 
-### 3. **Camera Vision Pipeline**
-   - Intrinsic and extrinsic camera calibration
-   - Lens distortion correction
-   - Multi-view stereo reconstruction
-   - Depth estimation and 3D point cloud generation
+It combines geometric processing, computer vision, and machine learning in an easy-to-use package.
 
-### 4. **Shape Matching & Retrieval**
-   - Feature-based similarity metrics
-   - Efficient indexing and ranking
-   - Nearest-neighbor retrieval with quantitative evaluation
+---
 
-### 5. **Machine Learning Integration**
-   - Feature normalization and dimensionality reduction (PCA)
-   - Supervised classification (SVM, RandomForest)
-   - Unsupervised clustering (K-means, hierarchical)
-   - Comprehensive evaluation metrics
+## Quick Setup
 
-## Project Structure
+### Prerequisites
+- Python 3.8 or higher
+- pip package manager
 
-```
-GeoVision3D/
-├── geovision3d/                    # Main package
-│   ├── __init__.py
-│   ├── mesh_utils.py              # Mesh I/O and processing
-│   ├── camera_calibration.py       # Camera calibration module
-│   ├── reconstruction.py           # 3D reconstruction from camera
-│   ├── geometric_features.py       # Geometric feature extraction
-│   ├── learned_features.py         # Learned shape descriptors
-│   ├── matching.py                 # Shape matching and retrieval
-│   └── ml_pipeline.py              # ML pipeline with scikit-learn
-├── examples/                       # Example scripts
-│   ├── example_mesh_analysis.py
-│   ├── example_camera_reconstruction.py
-│   └── example_shape_retrieval.py
-├── tests/                          # Unit tests
-│   └── test_*.py
-├── data/                           # Sample data directory
-├── requirements.txt
-└── README.md
-```
+### Installation
 
-## Installation
-
-1. Clone the repository:
+1. Navigate to the project directory:
 ```bash
-cd c:\Users\Rudolf\Desktop\projects\GeoVision3D
+cd GeoVision3D
 ```
 
-2. Create virtual environment (optional):
+2. Create and activate virtual environment (recommended):
 ```bash
 python -m venv venv
 venv\Scripts\activate
@@ -73,47 +41,144 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Usage
+---
 
-### Basic Mesh Analysis
+## Quick Usage Examples
+
+### Load and Analyze a Mesh
 ```python
 from geovision3d import mesh_utils, geometric_features
 
-# Load mesh
-mesh = mesh_utils.load_mesh("path/to/model.obj")
+mesh = mesh_utils.load_mesh("model.obj")
+stats = mesh_utils.get_mesh_stats(mesh)
 
-# Extract geometric features
-features = geometric_features.extract_all_features(mesh)
-print(f"Shape volume: {features['volume']:.4f}")
-print(f"Mean curvature: {features['mean_curvature']:.4f}")
+print(f"Volume: {stats['basic']['volume']:.4f}")
+print(f"Surface Area: {stats['basic']['surface_area']:.4f}")
+print(f"Sphericity: {stats['descriptors']['sphericity']:.4f}")
 ```
 
-### Camera Calibration and Reconstruction
+### Train a Shape Classifier
+```python
+import numpy as np
+import trimesh
+from geovision3d import learned_features, ml_pipeline
+
+# Prepare training data
+shapes = [
+    trimesh.creation.icosphere(subdivisions=2),
+    trimesh.creation.box(),
+    trimesh.creation.cylinder()
+]
+labels = np.array([0, 1, 2])
+
+# Train classifier
+extractor = learned_features.LearnedFeatureExtractor()
+extractor.fit(shapes)
+features = extractor.extract_batch(shapes)
+
+pipeline = ml_pipeline.MLPipeline(normalize=True, reduce_dims=True)
+pipeline.train_classifier(features, labels, classifier_type='svm')
+
+# Classify new shape
+test_mesh = trimesh.creation.icosphere()
+test_features = extractor.extract(test_mesh)
+prediction = pipeline.classify(test_features.reshape(1, -1))[0]
+```
+
+### Retrieve Similar Shapes
+```python
+from geovision3d import learned_features, matching
+
+# Build database
+extractor = learned_features.LearnedFeatureExtractor()
+extractor.fit(shapes)
+features = extractor.extract_batch(shapes)
+
+retriever = matching.ShapeRetriever(metric='euclidean')
+retriever.add_to_database(features, ['sphere', 'cube', 'cylinder'])
+
+# Query
+query_features = extractor.extract(test_mesh)
+results = retriever.retrieve(query_features, top_k=2)
+```
+
+---
+
+## Project Structure
+
+```
+GeoVision3D/
+├── geovision3d/
+│   ├── mesh_utils.py              # Load, process, analyze meshes
+│   ├── camera_calibration.py       # Camera calibration & distortion
+│   ├── reconstruction.py           # 3D reconstruction from images
+│   ├── geometric_features.py       # Extract geometric features
+│   ├── learned_features.py         # Learn shape descriptors
+│   ├── matching.py                 # Shape retrieval & similarity
+│   └── ml_pipeline.py              # ML classification & clustering
+├── examples/                       # Demo scripts
+├── tests/                          # Unit tests
+└── requirements.txt
+```
+
+---
+
+## Key Concepts & Skills Learned
+
+### Computer Vision & 3D Geometry
+- **Mesh processing**: Loading, validating, and analyzing 3D mesh files
+- **Geometric features**: Computing curvature, surface normals, shape moments
+- **Camera calibration**: Intrinsic/extrinsic calibration, lens distortion correction
+- **3D reconstruction**: Stereo depth estimation, point cloud processing, multi-view reconstruction
+
+### Feature Engineering
+- **Geometric descriptors**: Statistical shape analysis, local neighborhood features
+- **Learned features**: PCA-based descriptors, spectral features, histogram-based representations
+- **Feature learning**: Training on shape datasets, dimensionality reduction, normalization
+
+### Machine Learning
+- **Classification**: Training supervised models (SVM, Random Forest) on shape features
+- **Clustering**: Unsupervised grouping (K-means, hierarchical clustering)
+- **Retrieval**: Efficient shape matching using multiple similarity metrics
+- **Evaluation**: Cross-validation, performance metrics, feature importance
+
+### Software Engineering
+- **Object-oriented design**: Clean module architecture with single responsibilities
+- **Type hints & documentation**: Type annotations and comprehensive docstrings
+- **Testing**: Unit tests for robust functionality
+- **Data processing pipelines**: Standardized workflows for feature extraction and ML
+
+---
+
+## Core Modules
+
+| Module | Purpose |
+|--------|---------|
+| `mesh_utils.py` | Load/export meshes, compute statistics, normalize geometry |
+| `geometric_features.py` | Extract curvature, moments, normals, local descriptors |
+| `learned_features.py` | Compute histogram, PCA, spectral, and multi-scale features |
+| `camera_calibration.py` | Calibrate cameras, undistort images, estimate pose |
+| `reconstruction.py` | Stereo depth estimation, point cloud generation |
+| `matching.py` | Shape retrieval, similarity metrics, ranking |
+| `ml_pipeline.py` | Classification, clustering, dimensionality reduction |
+
+---
+
+## Camera Calibration & Reconstruction
+
+For camera-based 3D reconstruction:
+
 ```python
 from geovision3d import camera_calibration, reconstruction
 
-# Calibrate camera
 calib = camera_calibration.CameraCalibrator()
-K, dist_coeffs = calib.calibrate_from_checkerboard(images_dir="calibration_images/")
+K, dist_coeffs = calib.calibrate_from_directory("calibration_images/")
 
-# Reconstruct 3D from camera feed
 reconstructor = reconstruction.MultiViewReconstructor(K, dist_coeffs)
 points_3d, normals = reconstructor.reconstruct_from_sequence("video_frames/")
 ```
 
-### Shape Matching and Retrieval
-```python
-from geovision3d import mesh_utils, geometric_features, matching
-
-# Load query and database shapes
-query_mesh = mesh_utils.load_mesh("query.obj")
-database_meshes = [mesh_utils.load_mesh(f"db_{i}.obj") for i in range(10)]
-
-# Extract and match features
-query_features = geometric_features.extract_all_features(query_mesh)
-retriever = matching.ShapeRetriever()
-ranks, scores = retriever.retrieve(query_features, database_meshes)
-```
+---
 
 ## Key Algorithms
 
@@ -135,48 +200,6 @@ ranks, scores = retriever.retrieve(query_features, database_meshes)
 - **Classification**: Support Vector Machines, Random Forest
 - **Clustering**: K-means, Hierarchical clustering with linkage analysis
 - **Evaluation**: Precision, Recall, F1-score, Silhouette coefficient
-
-## API Reference
-
-### mesh_utils
-- `load_mesh(path)` - Load OBJ or STL file
-- `export_mesh(mesh, path)` - Export mesh to file
-- `normalize_mesh(mesh)` - Center and scale mesh
-- `get_mesh_stats(mesh)` - Compute basic statistics
-
-### camera_calibration
-- `CameraCalibrator.calibrate_from_checkerboard()` - Calibrate from images
-- `CameraCalibrator.undistort_image()` - Remove lens distortion
-- `CameraCalibrator.project_3d_to_2d()` - Project points
-
-### reconstruction
-- `MultiViewReconstructor` - Reconstruct from image sequence
-- `DepthEstimator` - Estimate depth from stereo/monocular
-- `PointCloudProcessor` - Process and filter point clouds
-
-### geometric_features
-- `extract_curvature()` - Compute surface curvature
-- `extract_shape_moments()` - Shape moment invariants
-- `extract_all_features()` - All geometric features at once
-
-### matching
-- `ShapeRetriever` - Efficient shape retrieval and ranking
-- `compute_similarity()` - Feature similarity metrics
-- `evaluate_retrieval()` - Quantitative evaluation
-
-### ml_pipeline
-- `FeatureNormalizer` - Normalize feature vectors
-- `DimensionalityReducer` - PCA wrapper
-- `ShapeClassifier` - Train/test classification
-- `ShapeClusterer` - Unsupervised clustering
-
-## Performance & Accuracy
-
-The system emphasizes accuracy through:
-- **Camera Calibration**: Proper intrinsic/extrinsic parameter estimation
-- **Noise Handling**: Outlier removal, smoothing, robust statistics
-- **Feature Validation**: Cross-validation, sensitivity analysis
-- **Quantitative Evaluation**: Precision-recall curves, confusion matrices
 
 ## Requirements
 
